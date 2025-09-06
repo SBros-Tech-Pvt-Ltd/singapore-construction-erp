@@ -4,17 +4,27 @@
   "license": "MIT",
   "scripts": {},
   "private": true,
-  "dependencies": {},
   "devDependencies": {
+    "@biomejs/biome": "^2.2.2",
     "@nx/js": "21.4.1",
+    "@nx/next": "^21.4.1",
     "@swc-node/register": "~1.9.1",
+    "@swc/cli": "~0.6.0",
     "@swc/core": "~1.5.7",
     "@swc/helpers": "~0.5.11",
+    "@types/react": "19.0.0",
+    "@types/react-dom": "19.0.0",
     "nx": "21.4.1",
     "tslib": "^2.3.0",
     "typescript": "~5.8.2"
   },
   "workspaces": [
-    "packages/*"
-  ]
+    "packages/*",
+    "apps/*"
+  ],
+  "dependencies": {
+    "next": "~15.2.4",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+  }
 }
