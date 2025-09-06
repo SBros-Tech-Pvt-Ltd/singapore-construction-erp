@@ -1,8 +1,10 @@
+// File: src/db/schema/01-organization.ts
 // Organization structure within each company
 
 import { pgTable, uuid, varchar, timestamp, text, boolean } from 'drizzle-orm/pg-core';
 import { tenants } from './00-master';
 
+// Define departments table first without the self-reference
 export const departments = pgTable('departments', {
   departmentId: uuid('department_id').defaultRandom().primaryKey(),
   tenantId: uuid('tenant_id').references(() => tenants.tenantId).notNull(),
@@ -11,11 +13,11 @@ export const departments = pgTable('departments', {
   departmentCode: varchar('department_code', { length: 10 }).notNull(),
   description: text('description'),
   
-  // Department hierarchy (self-reference)
-  parentDepartmentId: uuid('parent_department_id').references(() => departments.departmentId),
+  // Department hierarchy (self-reference) - using string reference
+  parentDepartmentId: uuid('parent_department_id'),
   
-  // Department head
-  departmentHeadId: uuid('department_head_id'), // Will reference employees table
+  // Department head - will be linked later when employees table is available
+  departmentHeadId: uuid('department_head_id'),
   
   isActive: boolean('is_active').default(true),
   createdAt: timestamp('created_at').defaultNow(),

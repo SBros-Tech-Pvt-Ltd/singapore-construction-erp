@@ -37,7 +37,9 @@ export const employees = pgTable('employees', {
   departmentId: uuid('department_id').references(() => departments.departmentId),
   designationId: uuid('designation_id').references(() => designations.designationId),
   locationId: uuid('location_id').references(() => locations.locationId),
-  supervisorId: uuid('supervisor_id').references(() => employees.employeeId), // Self-reference
+  
+  // Self-reference for supervisor - remove the explicit reference to avoid circular dependency
+  supervisorId: uuid('supervisor_id'), // Will be handled in relations file
   
   // Employment details
   dateOfJoining: date('date_of_joining').notNull(),
