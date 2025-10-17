@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { UserPlus, Search, Download, Upload, Edit2, Trash2, Key, Eye, Activity, FileSpreadsheet, X, Filter as FilterIcon } from 'lucide-react';
-import { UserModals } from '@/components/modals/UserModal';
+import { UserModals } from '@/components/modals/UseModal';
 
 interface User {
   id: number;

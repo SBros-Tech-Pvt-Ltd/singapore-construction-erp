@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { X, Eye, Edit2, Key, Trash2 } from 'lucide-react';
+import { X, Key, Trash2 } from 'lucide-react';
 
 interface User {
   id: number;
@@ -20,6 +20,9 @@ interface UserModalProps {
   user: User | null;
   isOpen: boolean;
   onClose: () => void;
+}
+
+interface EditUserModalProps extends UserModalProps {
   onUpdate?: (user: User) => void;
 }
 
@@ -34,13 +37,9 @@ interface ConfirmModalProps {
 const roles = ['Employee', 'Branch Admin', 'HR', 'Finance', 'Manager', 'Super Admin'];
 const modules = ['Dashboard', 'Employee Management', 'Attendance', 'Leave', 'Payroll', 'Reports', 'Settings'];
 
-// View User Modal
-export const ViewUserModal: React.FC<UserModalProps> = ({ user, isOpen, onClose, onUpdate }) => {
+// ✅ View User Modal - Removed unused props and function
+export const ViewUserModal: React.FC<UserModalProps> = ({ user, isOpen, onClose }) => {
   if (!isOpen || !user) return null;
-
-  const handleEditClick = () => {
-    onClose();
-  };
 
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -128,8 +127,8 @@ export const ViewUserModal: React.FC<UserModalProps> = ({ user, isOpen, onClose,
   );
 };
 
-// Edit User Modal
-export const EditUserModal: React.FC<UserModalProps> = ({ user, isOpen, onClose, onUpdate }) => {
+// ✅ Edit User Modal - Separated interface to include onUpdate
+export const EditUserModal: React.FC<EditUserModalProps> = ({ user, isOpen, onClose, onUpdate }) => {
   if (!isOpen || !user) return null;
 
   const [firstName, lastName] = user.name.split(' ');
@@ -305,7 +304,7 @@ export const EditUserModal: React.FC<UserModalProps> = ({ user, isOpen, onClose,
   );
 };
 
-// Reset Password Modal
+// ✅ Reset Password Modal - Fixed apostrophe
 export const ResetPasswordModal: React.FC<ConfirmModalProps> = ({ isOpen, onClose, onConfirm, user }) => {
   if (!isOpen || !user) return null;
 
@@ -345,7 +344,7 @@ export const ResetPasswordModal: React.FC<ConfirmModalProps> = ({ isOpen, onClos
 
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
             <p className="text-sm text-orange-800">
-              A password reset link will be sent to the user's email address. The link will expire in 24 hours.
+              A password reset link will be sent to the user&apos;s email address. The link will expire in 24 hours.
             </p>
           </div>
 
@@ -393,7 +392,7 @@ export const ResetPasswordModal: React.FC<ConfirmModalProps> = ({ isOpen, onClos
   );
 };
 
-// Delete User Modal
+// ✅ Delete User Modal
 export const DeleteUserModal: React.FC<ConfirmModalProps> = ({ isOpen, onClose, onConfirm, user }) => {
   if (!isOpen || !user) return null;
 
@@ -458,7 +457,7 @@ export const DeleteUserModal: React.FC<ConfirmModalProps> = ({ isOpen, onClose, 
   );
 };
 
-// Combined Modal Manager Component
+// ✅ Combined Modal Manager Component
 export const UserModals: React.FC<{
   viewModal: { isOpen: boolean; user: User | null };
   editModal: { isOpen: boolean; user: User | null };
