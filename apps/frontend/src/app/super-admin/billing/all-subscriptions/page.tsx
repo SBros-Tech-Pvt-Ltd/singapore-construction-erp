@@ -3,7 +3,6 @@
 import {
   CreditCard,
   Search,
-  Filter,
   MoreHorizontal,
   Eye,
   Edit,
@@ -15,16 +14,13 @@ import {
   DollarSign,
   Calendar,
   TrendingUp,
-  Building,
   RefreshCw,
   Download,
   Send,
   Ban,
   Settings,
   ArrowUpRight,
-  Users,
-  Package
-} from 'lucide-react';
+  Users} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
