@@ -1,60 +1,208 @@
+// app/admin/components/admin-header.tsx
 'use client';
 
-import { Bell, Mail, Search, Menu, LayoutDashboard } from 'lucide-react';
+import { useState } from 'react';
+import {
+  Bell,
+  Settings,
+  LogOut,
+  User,
+  Building,
+  ChevronDown,
+  Search,
+  Menu,
+  Sun,
+  Moon,
+  HelpCircle,
+  MessageSquare
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { useTheme } from 'next-themes';
 
-export default function AdminHeader() {
+interface AdminHeaderProps {
+  onMenuClick: () => void;
+  companyName?: string;
+  userName?: string;
+  userRole?: string;
+}
+
+export function AdminHeader({ 
+  onMenuClick, 
+  companyName = "ABC Constructions",
+  userName = "John Doe",
+  userRole = "Admin"
+}: AdminHeaderProps) {
+  const { theme, setTheme } = useTheme();
+  const [notifications] = useState(3);
+
   return (
-    <header className="bg-gradient-to-r from-blue-500 to-blue-400 h-16 shadow-md flex items-center justify-between px-6">
-      {/* Left Section */}
-      <div className="flex items-center gap-4">
-        {/* Mobile Menu Toggle */}
-        <button className="lg:hidden text-white p-2 hover:bg-white/10 rounded-lg">
-          <Menu className="w-6 h-6" />
-        </button>
+    <header className="sticky top-0 z-50 w-full bg-gradient-to-r from-blue-500 to-blue-600 border-b border-blue-700 shadow-lg">
+      <div className="flex h-16 items-center gap-4 px-4 md:px-6">
+        {/* Mobile Menu Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="lg:hidden text-white hover:bg-blue-700"
+          onClick={onMenuClick}
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
 
-        {/* Logo */}
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-            <LayoutDashboard className="w-5 h-5 text-white" />
+        
+
+        {/* Search Bar - Desktop */}
+        <div className="hidden md:flex flex-1 max-w-md ml-4">
+          <div className="relative w-full">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-blue-200" />
+            <Input
+              type="search"
+              placeholder="Search users, branches, devices..."
+              className="pl-9 w-full bg-blue-400 text-white placeholder-blue-200 border-blue-300 focus:bg-white focus:text-slate-900"
+            />
           </div>
-          <span className="hidden sm:block text-white font-semibold text-lg">Admin Portal</span>
         </div>
 
-        {/* Search Bar */}
-        <div className="hidden md:block relative">
-          <input
-            type="text"
-            placeholder="Search sub-customers, users, tickets..."
-            className="w-80 pl-10 pr-4 py-2 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50"
-          />
-          <Search className="w-5 h-5 absolute left-3 top-2.5 text-white/70" />
-        </div>
-      </div>
+        {/* Right Section */}
+        <div className="flex flex-1 items-center justify-end gap-2">
+          {/* Search - Mobile */}
+          <Button variant="ghost" size="icon" className="md:hidden text-white hover:bg-blue-700">
+            <Search className="h-5 w-5" />
+          </Button>
 
-      {/* Right Section */}
-      <div className="flex items-center gap-2">
-        {/* Notifications */}
-        <button className="relative p-2 text-white hover:bg-white/10 rounded-lg">
-          <Bell className="w-6 h-6" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-        </button>
+          {/* Theme Toggle */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="text-white hover:bg-blue-700">
+                <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                <span className="sr-only">Toggle theme</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setTheme('light')}>
+                <Sun className="h-4 w-4 mr-2" />
+                Light
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTheme('dark')}>
+                <Moon className="h-4 w-4 mr-2" />
+                Dark
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTheme('system')}>
+                <Settings className="h-4 w-4 mr-2" />
+                System
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-        {/* Messages */}
-        <button className="p-2 text-white hover:bg-white/10 rounded-lg">
-          <Mail className="w-6 h-6" />
-        </button>
+          {/* Support */}
+          <Button variant="ghost" size="icon" className="text-white hover:bg-blue-700">
+            <HelpCircle className="h-5 w-5" />
+          </Button>
 
-        {/* User Profile */}
-        <div className="ml-2 flex items-center gap-2 cursor-pointer">
-          <img
-            src="https://api.dicebear.com/7.x/avataaars/svg?seed=admin"
-            alt="Admin"
-            className="w-10 h-10 rounded-full border-2 border-white"
-          />
-          <div className="hidden md:block text-left">
-            <div className="text-white text-sm font-medium">Super Admin</div>
-            <div className="text-white/70 text-xs">owner@erp.com</div>
-          </div>
+          {/* Notifications */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative text-white hover:bg-blue-700">
+                <Bell className="h-5 w-5" />
+                {notifications > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                  >
+                    {notifications}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80">
+              <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <div className="max-h-96 overflow-y-auto">
+                <div className="p-3 hover:bg-accent cursor-pointer border-b">
+                  <p className="text-sm font-medium">Device Sync Failed</p>
+                  <p className="text-xs text-muted-foreground">Branch A - Device offline</p>
+                  <p className="text-xs text-muted-foreground mt-1">2 hours ago</p>
+                </div>
+                <div className="p-3 hover:bg-accent cursor-pointer border-b">
+                  <p className="text-sm font-medium">New User Added</p>
+                  <p className="text-xs text-muted-foreground">Sarah Connor joined HR Department</p>
+                  <p className="text-xs text-muted-foreground mt-1">5 hours ago</p>
+                </div>
+                <div className="p-3 hover:bg-accent cursor-pointer">
+                  <p className="text-sm font-medium">Attendance Report Ready</p>
+                  <p className="text-xs text-muted-foreground">Monthly report generated</p>
+                  <p className="text-xs text-muted-foreground mt-1">1 day ago</p>
+                </div>
+              </div>
+              <DropdownMenuSeparator />
+              <div className="p-2">
+                <Button variant="ghost" className="w-full text-sm">
+                  View All Notifications
+                </Button>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* User Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="gap-2 pl-2 pr-3 text-white hover:bg-blue-700">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src="/avatars/admin.png" alt={userName} />
+                  <AvatarFallback className="bg-blue-700 text-white">
+                    {userName.split(' ').map(n => n[0]).join('')}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="hidden md:flex flex-col items-start text-sm">
+                  <span className="font-medium">{userName}</span>
+                  <span className="text-xs text-blue-100">{userRole}</span>
+                </div>
+                <ChevronDown className="h-4 w-4 text-blue-100" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium">{userName}</p>
+                  <p className="text-xs text-muted-foreground">{userRole}</p>
+                  <p className="text-xs text-muted-foreground">admin@abcconstructions.com</p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <User className="h-4 w-4 mr-2" />
+                Profile Settings
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Building className="h-4 w-4 mr-2" />
+                Company Settings
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Settings className="h-4 w-4 mr-2" />
+                Preferences
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Support Center
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-destructive">
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>

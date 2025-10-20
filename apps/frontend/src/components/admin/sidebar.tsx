@@ -1,136 +1,328 @@
+// app/admin/components/admin-sidebar.tsx
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  LayoutDashboard, Building2, Users, CreditCard, FileText,
-  TrendingUp, Activity, MessageSquare, Settings, BarChart3, 
-  Package, X
+import { cn } from '@/lib/utils';
+import {
+  LayoutDashboard,
+  Building2,
+  Users,
+  Shield,
+  Database,
+  Fingerprint,
+  FileText,
+  Settings,
+  HelpCircle,
+  Home,
+  UserPlus,
+  MapPin,
+  Briefcase,
+  CalendarDays,
+  Clock,
+  FileCheck,
+  Cpu,
+  BarChart3,
+  Mail,
+  Bell,
+  Key,
+  Lock,
+  MessageSquare,
+  X,
+  Activity
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-interface MenuItem {
-  name: string;
-  icon: any;
-  path: string;
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-interface MenuSection {
-  section: string;
-  items: MenuItem[];
+interface NavItem {
+  title: string;
+  href: string;
+  icon: React.ElementType;
+  category?: string;
 }
 
-export default function AdminSidebar() {
+const navItems: NavItem[] = [
+  {
+    title: 'Dashboard',
+    href: '/admin/dashboard',
+    icon: LayoutDashboard,
+  },
+  {
+    category: 'Branch Management',
+    title: 'All Branches',
+    href: '/admin/branches',
+    icon: Building2,
+  },
+  {
+    title: 'Add Branch',
+    href: '/admin/branches/create',
+    icon: Building2,
+  },
+  {
+    title: 'Branch Admins',
+    href: '/admin/branches/admins',
+    icon: UserPlus,
+  },
+  {
+    title: 'Locations',
+    href: '/admin/branches/locations',
+    icon: MapPin,
+  },
+  {
+    category: 'User Management',
+    title: 'All Users',
+    href: '/admin/users',
+    icon: Users,
+  },
+  {
+    title: 'Add User',
+    href: '/admin/users/create',
+    icon: UserPlus,
+  },
+  {
+    title: 'Import Users',
+    href: '/admin/users/import',
+    icon: FileCheck,
+  },
+  {
+    title: 'User Logs',
+    href: '/admin/users/logs',
+    icon: Clock,
+  },
+  {
+    category: 'Roles & Permissions',
+    title: 'All Roles',
+    href: '/admin/roles',
+    icon: Shield,
+  },
+  {
+    title: 'Create Role',
+    href: '/admin/roles/create',
+    icon: UserPlus,
+  },
+  {
+    title: 'Permissions',
+    href: '/admin/roles/permissions',
+    icon: Lock,
+  },
+  {
+    title: 'Role Reports',
+    href: '/admin/roles/reports',
+    icon: FileText,
+  },
+  {
+    category: 'Master Data',
+    title: 'Departments',
+    href: '/admin/masters/departments',
+    icon: Briefcase,
+  },
+  {
+    title: 'Designations',
+    href: '/admin/masters/designations',
+    icon: Users,
+  },
+  {
+    title: 'Shifts',
+    href: '/admin/masters/shifts',
+    icon: Clock,
+  },
+  {
+    title: 'Attendance Rules',
+    href: '/admin/masters/attendance-rules',
+    icon: CalendarDays,
+  },
+  {
+    title: 'Leave Types',
+    href: '/admin/masters/leave-types',
+    icon: FileCheck,
+  },
+  {
+    title: 'Company Policies',
+    href: '/admin/masters/policies',
+    icon: FileText,
+  },
+  {
+    category: 'Biometric Devices',
+    title: 'All Devices',
+    href: '/admin/devices',
+    icon: Cpu,
+  },
+  {
+    title: 'Add Device',
+    href: '/admin/devices/create',
+    icon: Fingerprint,
+  },
+  {
+    title: 'Sync Logs',
+    href: '/admin/devices/logs',
+    icon: Clock,
+  },
+  {
+    title: 'Device Status',
+    href: '/admin/devices/status',
+    icon: Activity,
+  },
+  {
+    category: 'Reports & Analytics',
+    title: 'Login Reports',
+    href: '/admin/reports/logins',
+    icon: Users,
+  },
+  {
+    title: 'Device Sync',
+    href: '/admin/reports/device-sync',
+    icon: Fingerprint,
+  },
+  {
+    title: 'Role Audit',
+    href: '/admin/reports/role-audit',
+    icon: Shield,
+  },
+  {
+    title: 'Branch Summary',
+    href: '/admin/reports/branch-summary',
+    icon: Building2,
+  },
+  {
+    category: 'Settings',
+    title: 'Company Profile',
+    href: '/admin/settings/company',
+    icon: Building2,
+  },
+  {
+    title: 'Branding',
+    href: '/admin/settings/branding',
+    icon: Settings,
+  },
+  {
+    title: 'Email/SMS',
+    href: '/admin/settings/notifications',
+    icon: Mail,
+  },
+  {
+    title: 'Notification Center',
+    href: '/admin/settings/alerts',
+    icon: Bell,
+  },
+  {
+    title: 'API Keys',
+    href: '/admin/settings/api-keys',
+    icon: Key,
+  },
+  {
+    title: 'Security',
+    href: '/admin/settings/security',
+    icon: Lock,
+  },
+  {
+    category: 'Support Center',
+    title: 'Raise Ticket',
+    href: '/admin/support/create',
+    icon: MessageSquare,
+  },
+  {
+    title: 'My Tickets',
+    href: '/admin/support/tickets',
+    icon: FileText,
+  },
+  {
+    title: 'Chat Support',
+    href: '/admin/support/chat',
+    icon: MessageSquare,
+  },
+];
+
+export function AdminSidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
 
-  const menuItems: MenuSection[] = [
-    {
-      section: 'Dashboard',
-      items: [
-        { name: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard' }
-      ]
-    },
-    {
-      section: 'Sub-Customers',
-      items: [
-        { name: 'Companies', icon: Building2, path: '/admin/companies' },
-        { name: 'Users', icon: Users, path: '/admin/users' }
-      ]
-    },
-    {
-      section: 'Subscription',
-      items: [
-        { name: 'Plans & Billing', icon: CreditCard, path: '/admin/plans' },
-        { name: 'Invoices', icon: FileText, path: '/admin/invoices' },
-        { name: 'Analytics', icon: TrendingUp, path: '/admin/analytics' }
-      ]
-    },
-    {
-      section: 'Usage',
-      items: [
-        { name: 'Activity Logs', icon: Activity, path: '/admin/logs' }
-      ]
-    },
-    {
-      section: 'Support',
-      items: [
-        { name: 'Tickets', icon: MessageSquare, path: '/admin/tickets' },
-        { name: 'Chat', icon: MessageSquare, path: '/admin/chat' }
-      ]
-    },
-    {
-      section: 'Reports',
-      items: [
-        { name: 'Business Reports', icon: BarChart3, path: '/admin/reports' }
-      ]
-    },
-    {
-      section: 'Settings',
-      items: [
-        { name: 'Profile', icon: Users, path: '/admin/profile' },
-        { name: 'Branding', icon: Package, path: '/admin/branding' },
-        { name: 'Preferences', icon: Settings, path: '/admin/preferences' }
-      ]
+  const isActive = (href: string) => pathname === href;
+
+  // Group items by category
+  const groupedItems = navItems.reduce((acc, item) => {
+    if (item.category) {
+      acc.push({ type: 'category', title: item.category });
     }
-  ];
+    acc.push(item);
+    return acc;
+  }, [] as any[]);
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 h-full flex flex-col">
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
-        {menuItems.map((section, idx) => (
-          <div key={idx}>
-            {/* Section Header */}
-            <h3 className="px-3 mb-2 text-xs font-semibold text-gray-900 uppercase tracking-wider">
-              {section.section}
-            </h3>
-            
-            {/* Section Items */}
-            <div className="space-y-0.5">
-              {section.items.map((item) => {
-                const isActive = pathname === item.path;
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.path}
-                    className={`
-                      w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
-                      transition-all relative
-                      ${isActive 
-                        ? 'bg-gray-100 text-gray-900' 
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                      }
-                    `}
-                  >
-                    {/* Active Indicator */}
-                    {isActive && (
-                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-blue-600 rounded-r-full" />
-                    )}
-                    
-                    <item.icon className="w-5 h-5 flex-shrink-0" />
-                    <span className="flex-1 text-left">{item.name}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+    <>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
+          onClick={onClose}
+        />
+      )}
 
-        {/* Upgrade Card */}
-        <div className="mt-8 mx-3">
-          <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-xl p-5 text-center border border-gray-100">
-            <div className="relative mb-2">
-              <div className="text-5xl">✨</div>
-              <div className="text-3xl absolute top-0 right-8 opacity-50">📊</div>
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          'fixed top-0 left-0 z-50 h-full w-64 bg-slate-100 transition-transform duration-300 lg:translate-x-0 lg:static flex flex-col',
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        )}
+      >
+        {/* Sidebar Header */}
+        <div className="h-16 bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-between px-6 shadow-lg flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white">
+              <Building2 className="h-5 w-5 text-blue-600" />
             </div>
-            <h4 className="text-sm font-semibold text-gray-800 mb-1">Add New Customer</h4>
-            <p className="text-xs text-gray-600 mb-3">Expand your business</p>
-            <button className="w-full py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg text-sm font-medium hover:from-blue-600 hover:to-purple-700 shadow-sm">
-              Add Sub-Customer
-            </button>
+            <div>
+              <p className="text-sm font-bold text-white">ABC Constructions</p>
+              <p className="text-xs text-blue-100">Admin Panel</p>
+            </div>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden text-white hover:bg-blue-700"
+            onClick={onClose}
+          >
+            <X className="h-5 w-5" />
+          </Button>
         </div>
-      </nav>
-    </aside>
+
+        {/* Navigation */}
+        <ScrollArea className="flex-1">
+          <nav className="space-y-0 px-3 py-4">
+            {groupedItems.map((item, index) => {
+              if (item.type === 'category') {
+                return (
+                  <div key={`category-${index}`} className="px-4 py-3 mt-2 first:mt-0">
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                      {item.title}
+                    </p>
+                  </div>
+                );
+              }
+
+              return (
+                <Link key={item.href} href={item.href}>
+                  <Button
+                    variant="ghost"
+                    className={cn(
+                      'w-full justify-start px-4 py-2.5 text-slate-700 hover:bg-blue-100 hover:text-blue-700 rounded-lg transition-colors mb-1',
+                      isActive(item.href) &&
+                        'bg-blue-100 text-blue-700 font-semibold'
+                    )}
+                    onClick={onClose}
+                  >
+                    <item.icon className="h-4 w-4 mr-3 flex-shrink-0" />
+                    <span className="text-sm font-medium">{item.title}</span>
+                  </Button>
+                </Link>
+              );
+            })}
+          </nav>
+        </ScrollArea>
+      </aside>
+    </>
   );
 }
