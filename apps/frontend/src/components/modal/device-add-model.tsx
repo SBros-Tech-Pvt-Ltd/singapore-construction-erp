@@ -1,10 +1,8 @@
-// app/admin/devices/create/page.tsx
+// components/device-add-modal.tsx
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import {
-  ArrowLeft,
   Fingerprint,
   Building2,
   Server,
@@ -14,7 +12,8 @@ import {
   Info,
   Eye,
   EyeOff,
-  Wifi
+  Wifi,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,9 +31,15 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-export default function AddDevicePage() {
-  const router = useRouter();
+interface DeviceAddModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onDeviceAdded: () => void;
+}
+
+export function DeviceAddModal({ open, onOpenChange, onDeviceAdded }: DeviceAddModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [testingConnection, setTestingConnection] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -113,8 +118,29 @@ export default function AddDevicePage() {
       alert('✅ Device registered successfully!');
       console.log('Form data:', formData);
       
-      // Redirect to devices list
-      router.push('/admin/devices');
+      // Reset form and close modal
+      setFormData({
+        name: '',
+        deviceId: '',
+        brand: '',
+        model: '',
+        serialNumber: '',
+        branch: '',
+        location: '',
+        ipAddress: '',
+        port: '4370',
+        username: 'admin',
+        password: '',
+        apiKey: '',
+        syncFrequency: '15',
+        shift: '',
+        batteryBackup: true,
+        autoSync: true,
+        notes: ''
+      });
+      
+      onDeviceAdded();
+      onOpenChange(false);
     } catch (error) {
       alert('Failed to register device');
     } finally {
@@ -123,28 +149,23 @@ export default function AddDevicePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
-              Add New Biometric Device
-            </h1>
-            <p className="text-sm md:text-base text-muted-foreground">
-              Register a new attendance device and configure settings
-            </p>
-          </div>
-        </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Fingerprint className="h-5 w-5" />
+            Add New Biometric Device
+          </DialogTitle>
+          <CardDescription>
+            Register a new attendance device and configure settings
+          </CardDescription>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Registration Method Tabs */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base md:text-lg">Registration Method</CardTitle>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base">Registration Method</CardTitle>
               <CardDescription>Choose how you want to register the device</CardDescription>
             </CardHeader>
             <CardContent>
@@ -161,12 +182,12 @@ export default function AddDevicePage() {
                 </TabsList>
 
                 {/* Manual Setup Tab */}
-                <TabsContent value="manual" className="space-y-6 mt-6">
+                <TabsContent value="manual" className="space-y-4 mt-4">
                   {/* Basic Information */}
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <h3 className="text-sm font-semibold text-foreground">Basic Information</h3>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="space-y-2">
                         <Label htmlFor="name">Device Name *</Label>
                         <Input 
@@ -190,7 +211,7 @@ export default function AddDevicePage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div className="space-y-2">
                         <Label htmlFor="brand">Brand *</Label>
                         <Select value={formData.brand} onValueChange={(value) => handleInputChange('brand', value)}>
@@ -198,11 +219,11 @@ export default function AddDevicePage() {
                             <SelectValue placeholder="Select brand" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="zkteco">ZKTeco</SelectItem>
-                            <SelectItem value="suprema">Suprema</SelectItem>
-                            <SelectItem value="anviz">Anviz</SelectItem>
-                            <SelectItem value="hikvision">Hikvision</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
+                            <SelectItem value="ZKTeco">ZKTeco</SelectItem>
+                            <SelectItem value="Suprema">Suprema</SelectItem>
+                            <SelectItem value="Anviz">Anviz</SelectItem>
+                            <SelectItem value="Hikvision">Hikvision</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -230,10 +251,10 @@ export default function AddDevicePage() {
                   </div>
 
                   {/* Location & Branch */}
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <h3 className="text-sm font-semibold text-foreground">Location & Assignment</h3>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="space-y-2">
                         <Label htmlFor="branch">Branch *</Label>
                         <Select value={formData.branch} onValueChange={(value) => handleInputChange('branch', value)}>
@@ -241,11 +262,11 @@ export default function AddDevicePage() {
                             <SelectValue placeholder="Select branch" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="head-office">Head Office</SelectItem>
-                            <SelectItem value="site-a">Site A</SelectItem>
-                            <SelectItem value="site-b">Site B</SelectItem>
-                            <SelectItem value="site-c">Site C</SelectItem>
-                            <SelectItem value="site-d">Site D</SelectItem>
+                            <SelectItem value="Head Office">Head Office</SelectItem>
+                            <SelectItem value="Site A">Site A</SelectItem>
+                            <SelectItem value="Site B">Site B</SelectItem>
+                            <SelectItem value="Site C">Site C</SelectItem>
+                            <SelectItem value="Site D">Site D</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -268,19 +289,19 @@ export default function AddDevicePage() {
                           <SelectValue placeholder="Select shift" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="day">Day Shift (9:00 AM - 6:00 PM)</SelectItem>
-                          <SelectItem value="night">Night Shift (10:00 PM - 7:00 AM)</SelectItem>
-                          <SelectItem value="rotational">Rotational Shift</SelectItem>
+                          <SelectItem value="Day Shift">Day Shift (9:00 AM - 6:00 PM)</SelectItem>
+                          <SelectItem value="Night Shift">Night Shift (10:00 PM - 7:00 AM)</SelectItem>
+                          <SelectItem value="Rotational">Rotational Shift</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
 
                   {/* Network Configuration */}
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <h3 className="text-sm font-semibold text-foreground">Network Configuration</h3>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div className="space-y-2 md:col-span-2">
                         <Label htmlFor="ipAddress">IP Address *</Label>
                         <Input 
@@ -304,7 +325,7 @@ export default function AddDevicePage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="space-y-2">
                         <Label htmlFor="username">Device Username</Label>
                         <Input 
@@ -339,7 +360,7 @@ export default function AddDevicePage() {
                     </div>
 
                     {/* Test Connection */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                       <Button 
                         type="button"
                         variant="outline"
@@ -376,7 +397,7 @@ export default function AddDevicePage() {
                   </div>
 
                   {/* Sync Settings */}
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <h3 className="text-sm font-semibold text-foreground">Sync Settings</h3>
                     
                     <div className="space-y-2">
@@ -394,11 +415,11 @@ export default function AddDevicePage() {
                       </Select>
                     </div>
 
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="space-y-0.5">
                         <Label htmlFor="autoSync">Auto Sync</Label>
                         <p className="text-sm text-muted-foreground">
-                          Automatically sync attendance data at specified intervals
+                          Automatically sync attendance data
                         </p>
                       </div>
                       <Switch
@@ -408,7 +429,7 @@ export default function AddDevicePage() {
                       />
                     </div>
 
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="space-y-0.5">
                         <Label htmlFor="batteryBackup">Battery Backup</Label>
                         <p className="text-sm text-muted-foreground">
@@ -424,7 +445,7 @@ export default function AddDevicePage() {
                   </div>
 
                   {/* Additional Notes */}
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <h3 className="text-sm font-semibold text-foreground">Additional Information</h3>
                     
                     <div className="space-y-2">
@@ -441,24 +462,23 @@ export default function AddDevicePage() {
 
                   <Alert>
                     <Info className="h-4 w-4" />
-                    <AlertDescription>
+                    <AlertDescription className="text-sm">
                       <strong>Note:</strong> Ensure the device is powered on and connected to the same network. 
-                      Test the connection before saving to verify network configuration.
+                      Test the connection before saving.
                     </AlertDescription>
                   </Alert>
                 </TabsContent>
 
                 {/* API Integration Tab */}
-                <TabsContent value="api" className="space-y-6 mt-6">
+                <TabsContent value="api" className="space-y-4 mt-4">
                   <Alert>
                     <Info className="h-4 w-4" />
-                    <AlertDescription>
-                      <strong>API Integration:</strong> Register device using API key provided by the device manufacturer. 
-                      This method allows automatic configuration and discovery.
+                    <AlertDescription className="text-sm">
+                      <strong>API Integration:</strong> Register device using API key provided by the device manufacturer.
                     </AlertDescription>
                   </Alert>
 
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <div className="space-y-2">
                       <Label htmlFor="apiKey">API Key *</Label>
                       <Input 
@@ -479,11 +499,11 @@ export default function AddDevicePage() {
                           <SelectValue placeholder="Select branch" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="head-office">Head Office</SelectItem>
-                          <SelectItem value="site-a">Site A</SelectItem>
-                          <SelectItem value="site-b">Site B</SelectItem>
-                          <SelectItem value="site-c">Site C</SelectItem>
-                          <SelectItem value="site-d">Site D</SelectItem>
+                          <SelectItem value="Head Office">Head Office</SelectItem>
+                          <SelectItem value="Site A">Site A</SelectItem>
+                          <SelectItem value="Site B">Site B</SelectItem>
+                          <SelectItem value="Site C">Site C</SelectItem>
+                          <SelectItem value="Site D">Site D</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -494,7 +514,7 @@ export default function AddDevicePage() {
                     </Button>
                   </div>
 
-                  <div className="bg-muted p-4 rounded-lg">
+                  <div className="bg-muted p-3 rounded-lg">
                     <h4 className="text-sm font-semibold text-foreground mb-2">How API Integration Works:</h4>
                     <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
                       <li>Enter your device's API key</li>
@@ -509,45 +529,41 @@ export default function AddDevicePage() {
           </Card>
 
           {/* Action Buttons */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Info className="h-4 w-4" />
-                  <span>All fields marked with * are required</span>
-                </div>
-                <div className="flex gap-3 w-full sm:w-auto">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => router.back()}
-                    className="flex-1 sm:flex-none"
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={isSubmitting}
-                    className="flex-1 sm:flex-none min-w-[140px]"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Registering...
-                      </>
-                    ) : (
-                      <>
-                        <Fingerprint className="h-4 w-4 mr-2" />
-                        Register Device
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-4 border-t">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Info className="h-4 w-4" />
+              <span>All fields marked with * are required</span>
+            </div>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => onOpenChange(false)}
+                className="flex-1 sm:flex-none"
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="flex-1 sm:flex-none min-w-[140px]"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Registering...
+                  </>
+                ) : (
+                  <>
+                    <Fingerprint className="h-4 w-4 mr-2" />
+                    Register Device
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

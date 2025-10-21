@@ -14,7 +14,6 @@ import {
   FileText,
   Settings,
   HelpCircle,
-  Home,
   UserPlus,
   MapPin,
   Briefcase,
@@ -29,7 +28,9 @@ import {
   Lock,
   MessageSquare,
   X,
-  Activity
+  Activity,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -37,6 +38,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  onToggle: () => void;
+  collapsed: boolean;
 }
 
 interface NavItem {
@@ -153,21 +156,6 @@ const navItems: NavItem[] = [
     icon: Cpu,
   },
   {
-    title: 'Add Device',
-    href: '/admin/devices/create',
-    icon: Fingerprint,
-  },
-  {
-    title: 'Sync Logs',
-    href: '/admin/devices/logs',
-    icon: Clock,
-  },
-  {
-    title: 'Device Status',
-    href: '/admin/devices/status',
-    icon: Activity,
-  },
-  {
     category: 'Reports & Analytics',
     title: 'Login Reports',
     href: '/admin/reports/logins',
@@ -237,7 +225,7 @@ const navItems: NavItem[] = [
   },
 ];
 
-export function AdminSidebar({ isOpen, onClose }: SidebarProps) {
+export function AdminSidebar({ isOpen, onClose, onToggle, collapsed }: SidebarProps) {
   const pathname = usePathname();
 
   const isActive = (href: string) => pathname === href;
@@ -264,39 +252,61 @@ export function AdminSidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed top-0 left-0 z-50 h-full w-64 bg-slate-100 transition-transform duration-300 lg:translate-x-0 lg:static flex flex-col',
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+          'fixed lg:sticky top-0 left-0 z-40 h-screen bg-background border-r transition-all duration-300 flex flex-col',
+          collapsed ? 'w-16' : 'w-64',
+          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >
         {/* Sidebar Header */}
-        <div className="h-16 bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-between px-6 shadow-lg flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white">
-              <Building2 className="h-5 w-5 text-blue-600" />
+        <div className={cn(
+          "h-16 bg-gradient-to-r from-blue-500 to-blue-600 flex items-center px-4 border-b border-blue-400 flex-shrink-0",
+          collapsed ? "justify-center px-2" : "justify-between"
+        )}>
+          {!collapsed && (
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white">
+                <Building2 className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-white">ABC Constructions</p>
+                <p className="text-xs text-blue-100">Admin Panel</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-bold text-white">ABC Constructions</p>
-              <p className="text-xs text-blue-100">Admin Panel</p>
-            </div>
+          )}
+          
+          <div className="flex items-center gap-1">
+            {/* Toggle Button - Desktop */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hidden lg:flex h-8 w-8 text-white hover:bg-blue-700 hover:text-white"
+              onClick={onToggle}
+            >
+              {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            </Button>
+            
+            {/* Close Button - Mobile */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden h-8 w-8 text-white hover:bg-blue-700 hover:text-white"
+              onClick={onClose}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden text-white hover:bg-blue-700"
-            onClick={onClose}
-          >
-            <X className="h-5 w-5" />
-          </Button>
         </div>
 
         {/* Navigation */}
         <ScrollArea className="flex-1">
-          <nav className="space-y-0 px-3 py-4">
+          <nav className={cn("p-2 space-y-1", collapsed ? "px-1" : "px-2")}>
             {groupedItems.map((item, index) => {
               if (item.type === 'category') {
+                if (collapsed) return null;
+                
                 return (
-                  <div key={`category-${index}`} className="px-4 py-3 mt-2 first:mt-0">
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                  <div key={`category-${index}`} className="px-3 py-2 mt-4 first:mt-2">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       {item.title}
                     </p>
                   </div>
@@ -304,18 +314,34 @@ export function AdminSidebar({ isOpen, onClose }: SidebarProps) {
               }
 
               return (
-                <Link key={item.href} href={item.href}>
+                <Link 
+                  key={item.href} 
+                  href={item.href}
+                  className="block"
+                >
                   <Button
                     variant="ghost"
                     className={cn(
-                      'w-full justify-start px-4 py-2.5 text-slate-700 hover:bg-blue-100 hover:text-blue-700 rounded-lg transition-colors mb-1',
-                      isActive(item.href) &&
-                        'bg-blue-100 text-blue-700 font-semibold'
+                      'w-full justify-start transition-all mb-0.5',
+                      collapsed ? 'px-2 h-9' : 'px-3 h-10',
+                      isActive(item.href)
+                        ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-sm hover:bg-blue-50'
+                        : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                     )}
-                    onClick={onClose}
+                    onClick={() => {
+                      // Close sidebar on mobile when item is clicked
+                      if (window.innerWidth < 1024) {
+                        onClose();
+                      }
+                    }}
                   >
-                    <item.icon className="h-4 w-4 mr-3 flex-shrink-0" />
-                    <span className="text-sm font-medium">{item.title}</span>
+                    <item.icon className={cn(
+                      "flex-shrink-0 transition-colors", 
+                      collapsed ? "h-4 w-4 mx-auto" : "h-4 w-4 mr-3"
+                    )} />
+                    {!collapsed && (
+                      <span className="text-sm font-medium truncate">{item.title}</span>
+                    )}
                   </Button>
                 </Link>
               );

@@ -1,3 +1,4 @@
+// app/admin/layout.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -10,6 +11,7 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   // Close sidebar on window resize (if switching from mobile → desktop)
   useEffect(() => {
@@ -24,25 +26,30 @@ export default function AdminLayout({
 
   const handleMenuClick = () => setSidebarOpen(true)
   const handleCloseSidebar = () => setSidebarOpen(false)
+  const handleToggleSidebar = () => setSidebarCollapsed(!sidebarCollapsed)
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-screen bg-background overflow-hidden">
       {/* Sidebar */}
-      <AdminSidebar isOpen={sidebarOpen} onClose={handleCloseSidebar} />
+      <AdminSidebar 
+        isOpen={sidebarOpen} 
+        onClose={handleCloseSidebar}
+        onToggle={handleToggleSidebar}
+        collapsed={sidebarCollapsed}
+      />
 
       {/* Main Layout */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className={
+        `flex-1 flex flex-col overflow-hidden transition-all duration-300 ${
+          sidebarCollapsed ? 'lg:ml-' : 'lg:ml-'
+        }`
+      }>
         {/* Header */}
-        <AdminHeader
-          onMenuClick={handleMenuClick}
-          companyName="ABC Constructions"
-          userName="John Doe"
-          userRole="Admin"
-        />
+        <AdminHeader />
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto bg-slate-50 p-4 md:p-6 transition-all duration-300">
-          <div className="max-w-7xl mx-auto">{children}</div>
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+          <div className="max-w-7xl mx-auto w-full">{children}</div>
         </main>
       </div>
     </div>

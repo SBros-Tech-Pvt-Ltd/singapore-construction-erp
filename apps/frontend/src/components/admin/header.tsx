@@ -10,7 +10,6 @@ import {
   Building,
   ChevronDown,
   Search,
-  Menu,
   Sun,
   Moon,
   HelpCircle,
@@ -31,14 +30,12 @@ import { Badge } from '@/components/ui/badge';
 import { useTheme } from 'next-themes';
 
 interface AdminHeaderProps {
-  onMenuClick: () => void;
   companyName?: string;
   userName?: string;
   userRole?: string;
 }
 
 export function AdminHeader({ 
-  onMenuClick, 
   companyName = "ABC Constructions",
   userName = "John Doe",
   userRole = "Admin"
@@ -47,28 +44,16 @@ export function AdminHeader({
   const [notifications] = useState(3);
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-gradient-to-r from-blue-500 to-blue-600 border-b border-blue-700 shadow-lg">
+    <header className="sticky top-0 z-50 w-full bg-background border-b shadow-sm">
       <div className="flex h-16 items-center gap-4 px-4 md:px-6">
-        {/* Mobile Menu Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="lg:hidden text-white hover:bg-blue-700"
-          onClick={onMenuClick}
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
-
-        
-
         {/* Search Bar - Desktop */}
-        <div className="hidden md:flex flex-1 max-w-md ml-4">
+        <div className="hidden md:flex flex-1 max-w-md">
           <div className="relative w-full">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-blue-200" />
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
               placeholder="Search users, branches, devices..."
-              className="pl-9 w-full bg-blue-400 text-white placeholder-blue-200 border-blue-300 focus:bg-white focus:text-slate-900"
+              className="pl-9 w-full"
             />
           </div>
         </div>
@@ -76,14 +61,14 @@ export function AdminHeader({
         {/* Right Section */}
         <div className="flex flex-1 items-center justify-end gap-2">
           {/* Search - Mobile */}
-          <Button variant="ghost" size="icon" className="md:hidden text-white hover:bg-blue-700">
+          <Button variant="ghost" size="icon" className="md:hidden">
             <Search className="h-5 w-5" />
           </Button>
 
           {/* Theme Toggle */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-white hover:bg-blue-700">
+              <Button variant="ghost" size="icon">
                 <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                 <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
                 <span className="sr-only">Toggle theme</span>
@@ -106,14 +91,14 @@ export function AdminHeader({
           </DropdownMenu>
 
           {/* Support */}
-          <Button variant="ghost" size="icon" className="text-white hover:bg-blue-700">
+          <Button variant="ghost" size="icon">
             <HelpCircle className="h-5 w-5" />
           </Button>
 
           {/* Notifications */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative text-white hover:bg-blue-700">
+              <Button variant="ghost" size="icon" className="relative">
                 <Bell className="h-5 w-5" />
                 {notifications > 0 && (
                   <Badge 
@@ -157,18 +142,18 @@ export function AdminHeader({
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="gap-2 pl-2 pr-3 text-white hover:bg-blue-700">
+              <Button variant="ghost" className="gap-2 pl-2 pr-3">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="/avatars/admin.png" alt={userName} />
-                  <AvatarFallback className="bg-blue-700 text-white">
+                  <AvatarFallback className="bg-blue-600 text-white">
                     {userName.split(' ').map(n => n[0]).join('')}
                   </AvatarFallback>
                 </Avatar>
                 <div className="hidden md:flex flex-col items-start text-sm">
-                  <span className="font-medium">{userName}</span>
-                  <span className="text-xs text-blue-100">{userRole}</span>
+                  <span className="font-medium text-foreground">{userName}</span>
+                  <span className="text-xs text-muted-foreground">{userRole}</span>
                 </div>
-                <ChevronDown className="h-4 w-4 text-blue-100" />
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">

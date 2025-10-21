@@ -7,7 +7,6 @@ import {
   Fingerprint,
   Plus,
   Search,
-  Filter,
   MoreHorizontal,
   Edit,
   Trash2,
@@ -16,18 +15,15 @@ import {
   Wifi,
   WifiOff,
   Building2,
-  MapPin,
   Clock,
-  Activity,
-  Download,
   Settings,
   AlertCircle,
-  CheckCircle,
-  Server
+  Activity,
+  FileText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
   Table,
@@ -53,6 +49,156 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+
+
+import { SyncLogsModal } from '@/components/modal/sync-logs-modal';
+// Device Add Modal Component
+interface DeviceAddModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onDeviceAdded: () => void;
+}
+
+function DeviceAddModal({ open, onOpenChange, onDeviceAdded }: DeviceAddModalProps) {
+  const [formData, setFormData] = useState({
+    name: '',
+    deviceId: '',
+    brand: 'ZKTeco',
+    model: '',
+    branch: '',
+    ipAddress: '',
+    port: '4370',
+    location: '',
+    serialNumber: '',
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onDeviceAdded();
+    onOpenChange(false);
+    // Reset form
+    setFormData({
+      name: '',
+      deviceId: '',
+      brand: 'ZKTeco',
+      model: '',
+      branch: '',
+      ipAddress: '',
+      port: '4370',
+      location: '',
+      serialNumber: '',
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Add New Device</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Device Name</label>
+              <Input
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Bio-Device-HQ-01"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Device ID</label>
+              <Input
+                value={formData.deviceId}
+                onChange={(e) => setFormData({ ...formData, deviceId: e.target.value })}
+                placeholder="BD001"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Brand</label>
+              <Input
+                value={formData.brand}
+                onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                placeholder="ZKTeco"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Model</label>
+              <Input
+                value={formData.model}
+                onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                placeholder="K40"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">IP Address</label>
+              <Input
+                value={formData.ipAddress}
+                onChange={(e) => setFormData({ ...formData, ipAddress: e.target.value })}
+                placeholder="192.168.1.101"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Port</label>
+              <Input
+                value={formData.port}
+                onChange={(e) => setFormData({ ...formData, port: e.target.value })}
+                placeholder="4370"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Branch</label>
+              <Input
+                value={formData.branch}
+                onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
+                placeholder="Head Office"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Location</label>
+              <Input
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                placeholder="Main Entrance"
+                required
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium mb-2">Serial Number</label>
+              <Input
+                value={formData.serialNumber}
+                onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })}
+                placeholder="ZK-K40-2024-001"
+                required
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit">
+              Add Device
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 // Mock Data - Biometric Devices
 const biometricDevices = [
@@ -201,6 +347,9 @@ export default function BiometricDevicesPage() {
   const [branchFilter, setBranchFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [brandFilter, setBrandFilter] = useState('all');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [isLogsModalOpen, setIsLogsModalOpen] = useState(false);
 
   const formatDistanceToNow = (date: string) => {
     const now = new Date();
@@ -230,16 +379,6 @@ export default function BiometricDevicesPage() {
     return matchesSearch && matchesBranch && matchesStatus && matchesBrand;
   });
 
-  // Calculate stats
-  const stats = {
-    totalDevices: biometricDevices.length,
-    onlineDevices: biometricDevices.filter(d => d.status === 'online').length,
-    offlineDevices: biometricDevices.filter(d => d.status === 'offline').length,
-    warningDevices: biometricDevices.filter(d => d.status === 'warning').length,
-    totalUsers: biometricDevices.reduce((sum, d) => sum + d.totalUsers, 0),
-    todayAttendance: biometricDevices.reduce((sum, d) => sum + d.todayAttendance, 0)
-  };
-
   const handleSyncDevice = (deviceId: number) => {
     alert(`Triggering sync for device ${deviceId}...`);
     // API call to trigger sync
@@ -252,189 +391,55 @@ export default function BiometricDevicesPage() {
     }
   };
 
-  const handleSyncAll = () => {
-    alert('Syncing all devices...');
-    // API call to sync all devices
+  const handleDeviceAdded = () => {
+    // Refresh the devices list or update state
+    alert('Device added successfully! Refreshing list...');
+    // You can refetch devices data here
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Header */}
-        
+    <div className="min-h-screen bg-background p-6">
+      {/* Devices Table Card - Everything integrated here */}
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <CardTitle className="text-lg md:text-xl">
+              Registered Devices ({filteredDevices.length})
+            </CardTitle>
+            <div className="flex gap-2">
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setIsLogsModalOpen(true)}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Sync Logs
+              </Button>
+              
+              <Button size="sm" onClick={() => setIsAddModalOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Device
+              </Button>
+            </div>
+          </div>
 
-        {/* Stats Cards */}
-        <div className="grid gap-3 md:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
-          {/* Total Devices */}
-          <Card className="border-0 bg-gradient-to-br from-blue-600 to-blue-800 shadow-lg hover:shadow-xl transition-all">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-medium text-white">Total</CardTitle>
-              <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
-                <Fingerprint className="h-4 w-4 text-white" />
+          {/* Filters and Search integrated in CardHeader */}
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between pt-4">
+            <div className="flex-1">
+              <div className="relative max-w-md">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder="Search devices, IP, branch..." 
+                  className="pl-8"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl md:text-2xl font-bold text-white">{stats.totalDevices}</div>
-              <p className="text-[10px] text-white/80 mt-1">Devices</p>
-            </CardContent>
-          </Card>
-
-          {/* Online Devices */}
-          <Card className="border-0 bg-gradient-to-br from-emerald-600 to-emerald-800 shadow-lg hover:shadow-xl transition-all">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-medium text-white">Online</CardTitle>
-              <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
-                <Wifi className="h-4 w-4 text-white" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl md:text-2xl font-bold text-white">{stats.onlineDevices}</div>
-              <p className="text-[10px] text-white/80 mt-1">Active</p>
-            </CardContent>
-          </Card>
-
-          {/* Offline Devices */}
-          <Card className="border-0 bg-gradient-to-br from-red-600 to-red-800 shadow-lg hover:shadow-xl transition-all">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-medium text-white">Offline</CardTitle>
-              <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
-                <WifiOff className="h-4 w-4 text-white" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl md:text-2xl font-bold text-white">{stats.offlineDevices}</div>
-              <p className="text-[10px] text-white/80 mt-1">Down</p>
-            </CardContent>
-          </Card>
-
-          {/* Warning */}
-          <Card className="border-0 bg-gradient-to-br from-orange-600 to-orange-800 shadow-lg hover:shadow-xl transition-all">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-medium text-white">Warning</CardTitle>
-              <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
-                <AlertCircle className="h-4 w-4 text-white" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl md:text-2xl font-bold text-white">{stats.warningDevices}</div>
-              <p className="text-[10px] text-white/80 mt-1">Issues</p>
-            </CardContent>
-          </Card>
-
-          {/* Total Users */}
-          <Card className="border-0 bg-gradient-to-br from-purple-600 to-purple-800 shadow-lg hover:shadow-xl transition-all">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-medium text-white">Users</CardTitle>
-              <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
-                <Activity className="h-4 w-4 text-white" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl md:text-2xl font-bold text-white">{stats.totalUsers}</div>
-              <p className="text-[10px] text-white/80 mt-1">Enrolled</p>
-            </CardContent>
-          </Card>
-
-          {/* Today's Attendance */}
-          <Card className="border-0 bg-gradient-to-br from-cyan-600 to-cyan-800 shadow-lg hover:shadow-xl transition-all">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-medium text-white">Today</CardTitle>
-              <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
-                <CheckCircle className="h-4 w-4 text-white" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl md:text-2xl font-bold text-white">{stats.todayAttendance}</div>
-              <p className="text-[10px] text-white/80 mt-1">Present</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Quick Links */}
-        <div className="grid gap-3 md:gap-4 grid-cols-2 md:grid-cols-4">
-          <Link href="/admin/devices/logs">
-            <Card className="hover:shadow-lg transition-all cursor-pointer border-2 hover:border-primary">
-              <CardContent className="p-4 md:p-6">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                    <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">Sync Logs</p>
-                    <p className="text-xs text-muted-foreground">View history</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/admin/devices/status">
-            <Card className="hover:shadow-lg transition-all cursor-pointer border-2 hover:border-primary">
-              <CardContent className="p-4 md:p-6">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-green-100 dark:bg-green-900 flex items-center justify-center">
-                    <Activity className="h-5 w-5 text-green-600 dark:text-green-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">Device Status</p>
-                    <p className="text-xs text-muted-foreground">Health check</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/admin/devices/mapping">
-            <Card className="hover:shadow-lg transition-all cursor-pointer border-2 hover:border-primary">
-              <CardContent className="p-4 md:p-6">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
-                    <MapPin className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">Mapping</p>
-                    <p className="text-xs text-muted-foreground">Branch & Shift</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Card className="hover:shadow-lg transition-all cursor-pointer border-2 hover:border-primary" onClick={handleSyncAll}>
-            <CardContent className="p-4 md:p-6">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-orange-100 dark:bg-orange-900 flex items-center justify-center">
-                  <RefreshCw className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground">Re-Sync All</p>
-                  <p className="text-xs text-muted-foreground">Trigger now</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base md:text-lg">Filters & Search</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col gap-3 md:gap-4 sm:flex-row">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    placeholder="Search devices, IP, branch..." 
-                    className="pl-8"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
               <Select value={branchFilter} onValueChange={setBranchFilter}>
-                <SelectTrigger className="w-full sm:w-[160px]">
+                <SelectTrigger className="w-[140px]">
                   <SelectValue placeholder="Branch" />
                 </SelectTrigger>
                 <SelectContent>
@@ -447,7 +452,7 @@ export default function BiometricDevicesPage() {
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-[160px]">
+                <SelectTrigger className="w-[140px]">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -458,7 +463,7 @@ export default function BiometricDevicesPage() {
                 </SelectContent>
               </Select>
               <Select value={brandFilter} onValueChange={setBrandFilter}>
-                <SelectTrigger className="w-full sm:w-[160px]">
+                <SelectTrigger className="w-[140px]">
                   <SelectValue placeholder="Brand" />
                 </SelectTrigger>
                 <SelectContent>
@@ -469,178 +474,182 @@ export default function BiometricDevicesPage() {
                 </SelectContent>
               </Select>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </CardHeader>
 
-        {/* Devices Table */}
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <CardTitle className="text-base md:text-lg">
-                Registered Devices ({filteredDevices.length})
-              </CardTitle>
-              <Button variant="outline" size="sm">
-                <Settings className="h-4 w-4 mr-2" />
-                Columns
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="min-w-[200px]">Device</TableHead>
+                  <TableHead className="hidden md:table-cell">Branch</TableHead>
+                  <TableHead>Network</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="hidden lg:table-cell">Users</TableHead>
+                  <TableHead className="hidden xl:table-cell">Memory</TableHead>
+                  <TableHead className="hidden lg:table-cell">Last Sync</TableHead>
+                  <TableHead className="w-[70px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredDevices.length === 0 ? (
                   <TableRow>
-                    <TableHead className="min-w-[200px]">Device</TableHead>
-                    <TableHead className="hidden md:table-cell">Branch</TableHead>
-                    <TableHead>Network</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="hidden lg:table-cell">Users</TableHead>
-                    <TableHead className="hidden xl:table-cell">Memory</TableHead>
-                    <TableHead className="hidden lg:table-cell">Last Sync</TableHead>
-                    <TableHead className="w-[70px]"></TableHead>
+                    <TableCell colSpan={8} className="h-24 text-center">
+                      <div className="flex flex-col items-center justify-center py-8">
+                        <Fingerprint className="h-12 w-12 text-muted-foreground mb-4" />
+                        <p className="text-muted-foreground">No devices found</p>
+                        <Button 
+                          variant="outline" 
+                          className="mt-4"
+                          onClick={() => setIsAddModalOpen(true)}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Your First Device
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredDevices.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="h-24 text-center">
-                        <div className="flex flex-col items-center justify-center py-8">
-                          <Fingerprint className="h-12 w-12 text-muted-foreground mb-4" />
-                          <p className="text-muted-foreground">No devices found</p>
+                ) : (
+                  filteredDevices.map((device) => (
+                    <TableRow key={device.id} className="hover:bg-accent/50">
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
+                            device.status === 'online' ? 'bg-green-100 dark:bg-green-900' :
+                            device.status === 'warning' ? 'bg-orange-100 dark:bg-orange-900' :
+                            'bg-red-100 dark:bg-red-900'
+                          }`}>
+                            <Fingerprint className={`h-5 w-5 ${
+                              device.status === 'online' ? 'text-green-600 dark:text-green-400' :
+                              device.status === 'warning' ? 'text-orange-600 dark:text-orange-400' :
+                              'text-red-600 dark:text-red-400'
+                            }`} />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-medium text-foreground truncate">{device.name}</div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="outline" className="text-xs">{device.deviceId}</Badge>
+                              <span className="text-xs text-muted-foreground">{device.brand} {device.model}</span>
+                            </div>
+                          </div>
                         </div>
                       </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <div className="text-sm font-medium text-foreground">{device.branch}</div>
+                            <div className="text-xs text-muted-foreground">{device.location}</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div className="font-mono text-foreground">{device.ipAddress}</div>
+                          <div className="text-xs text-muted-foreground">Port: {device.port}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {device.status === 'online' ? (
+                            <>
+                              <Wifi className="h-4 w-4 text-green-600 dark:text-green-500" />
+                              <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 border-green-200 dark:border-green-800">
+                                Online
+                              </Badge>
+                            </>
+                          ) : device.status === 'warning' ? (
+                            <>
+                              <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-500" />
+                              <Badge className="bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300 border-orange-200 dark:border-orange-800">
+                                Warning
+                              </Badge>
+                            </>
+                          ) : (
+                            <>
+                              <WifiOff className="h-4 w-4 text-red-600 dark:text-red-500" />
+                              <Badge className="bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 border-red-200 dark:border-red-800">
+                                Offline
+                              </Badge>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        <div className="text-sm">
+                          <div className="font-medium text-foreground">{device.todayAttendance}/{device.totalUsers}</div>
+                          <div className="text-xs text-muted-foreground">Present today</div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden xl:table-cell">
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-muted-foreground">Memory</span>
+                            <span className="font-medium text-foreground">{device.memoryUsage}%</span>
+                          </div>
+                          <Progress value={device.memoryUsage} className="h-1" />
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Clock className="h-4 w-4" />
+                          <span className="text-xs">{formatDistanceToNow(device.lastSync)}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <Link href={`/admin/devices/${device.id}`}>
+                              <DropdownMenuItem>
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Details
+                              </DropdownMenuItem>
+                            </Link>
+                            <DropdownMenuItem>
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit Device
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleSyncDevice(device.id)}>
+                              <RefreshCw className="h-4 w-4 mr-2" />
+                              Sync Now
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteDevice(device.id)}>
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete Device
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
                     </TableRow>
-                  ) : (
-                    filteredDevices.map((device) => (
-                      <TableRow key={device.id} className="hover:bg-accent/50">
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
-                              device.status === 'online' ? 'bg-green-100 dark:bg-green-900' :
-                              device.status === 'warning' ? 'bg-orange-100 dark:bg-orange-900' :
-                              'bg-red-100 dark:bg-red-900'
-                            }`}>
-                              <Fingerprint className={`h-5 w-5 ${
-                                device.status === 'online' ? 'text-green-600 dark:text-green-400' :
-                                device.status === 'warning' ? 'text-orange-600 dark:text-orange-400' :
-                                'text-red-600 dark:text-red-400'
-                              }`} />
-                            </div>
-                            <div className="min-w-0">
-                              <div className="font-medium text-foreground truncate">{device.name}</div>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Badge variant="outline" className="text-xs">{device.deviceId}</Badge>
-                                <span className="text-xs text-muted-foreground">{device.brand} {device.model}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <div className="flex items-center gap-2">
-                            <Building2 className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                              <div className="text-sm font-medium text-foreground">{device.branch}</div>
-                              <div className="text-xs text-muted-foreground">{device.location}</div>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            <div className="font-mono text-foreground">{device.ipAddress}</div>
-                            <div className="text-xs text-muted-foreground">Port: {device.port}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            {device.status === 'online' ? (
-                              <>
-                                <Wifi className="h-4 w-4 text-green-600 dark:text-green-500" />
-                                <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 border-green-200 dark:border-green-800">
-                                  Online
-                                </Badge>
-                              </>
-                            ) : device.status === 'warning' ? (
-                              <>
-                                <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-500" />
-                                <Badge className="bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300 border-orange-200 dark:border-orange-800">
-                                  Warning
-                                </Badge>
-                              </>
-                            ) : (
-                              <>
-                                <WifiOff className="h-4 w-4 text-red-600 dark:text-red-500" />
-                                <Badge className="bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 border-red-200 dark:border-red-800">
-                                  Offline
-                                </Badge>
-                              </>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                          <div className="text-sm">
-                            <div className="font-medium text-foreground">{device.todayAttendance}/{device.totalUsers}</div>
-                            <div className="text-xs text-muted-foreground">Present today</div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden xl:table-cell">
-                          <div className="space-y-1">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-muted-foreground">Memory</span>
-                              <span className="font-medium text-foreground">{device.memoryUsage}%</span>
-                            </div>
-                            <Progress value={device.memoryUsage} className="h-1" />
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Clock className="h-4 w-4" />
-                            <span className="text-xs">{formatDistanceToNow(device.lastSync)}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <Link href={`/admin/devices/${device.id}`}>
-                                <DropdownMenuItem>
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  View Details
-                                </DropdownMenuItem>
-                              </Link>
-                              <DropdownMenuItem>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit Device
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleSyncDevice(device.id)}>
-                                <RefreshCw className="h-4 w-4 mr-2" />
-                                Sync Now
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Settings className="h-4 w-4 mr-2" />
-                                Configure
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteDevice(device.id)}>
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete Device
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Modals */}
+      <DeviceAddModal 
+        open={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        onDeviceAdded={handleDeviceAdded}
+      />
+      
+      
+      
+      <SyncLogsModal 
+        open={isLogsModalOpen}
+        onOpenChange={setIsLogsModalOpen}
+      />
     </div>
   );
 }
