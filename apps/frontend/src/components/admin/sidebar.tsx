@@ -156,6 +156,18 @@ const navItems: NavItem[] = [
     icon: Cpu,
   },
   {
+    category: 'Attendance',
+    title: 'Attendance List',
+    href: '/admin/attendance',
+    icon: Cpu,
+  },
+  {
+    title: 'Device Mapping',
+    href: '/admin/attendance/device-mapping',
+    icon: Fingerprint,
+  },
+
+  {
     category: 'Reports & Analytics',
     title: 'Login Reports',
     href: '/admin/reports/logins',
