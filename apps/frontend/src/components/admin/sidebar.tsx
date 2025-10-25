@@ -121,32 +121,32 @@ const navItems: NavItem[] = [
   {
     category: 'Master Data',
     title: 'Departments',
-    href: '/admin/masters/departments',
+    href: '/admin/Departmentmaster',
     icon: Briefcase,
   },
   {
     title: 'Designations',
-    href: '/admin/masters/designations',
+    href: '/admin/Designationmaster',
     icon: Users,
   },
   {
     title: 'Shifts',
-    href: '/admin/masters/shifts',
+    href: '/admin/shiftmaster',
     icon: Clock,
   },
   {
     title: 'Attendance Rules',
-    href: '/admin/masters/attendance-rules',
+    href: '/admin/attendencemaster',
     icon: CalendarDays,
   },
   {
     title: 'Leave Types',
-    href: '/admin/masters/leave-types',
+    href: '/admin/leavemaster',
     icon: FileCheck,
   },
   {
     title: 'Company Policies',
-    href: '/admin/masters/policies',
+    href: '/admin/companypolicymaster',
     icon: FileText,
   },
   {
