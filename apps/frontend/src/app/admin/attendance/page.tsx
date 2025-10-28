@@ -905,18 +905,9 @@ export default function AttendanceManagementPage() {
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleEdit(record)}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit
-                            </DropdownMenuItem>
+                            
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              className="text-destructive" 
-                              onClick={() => handleDelete(record.id)}
-                            >
-                              <XCircle className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
+                            
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
