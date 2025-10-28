@@ -40,11 +40,7 @@ export default function AdminLayout({
       />
 
       {/* Main Layout */}
-      <div className={
-        `flex-1 flex flex-col overflow-hidden transition-all duration-300 ${
-          sidebarCollapsed ? 'lg:ml-' : 'lg:ml-'
-        }`
-      }>
+      <div className="flex-1 flex flex-col overflow-hidden transition-all duration-300">
         {/* Header */}
         <AdminHeader />
 
