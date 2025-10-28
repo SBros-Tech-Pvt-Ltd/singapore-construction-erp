@@ -131,7 +131,7 @@ const navItems: NavItem[] = [
   },
   {
     title: 'Shifts',
-    href: '/admin/shiftmaster',
+    href: '/admin/Shifts',
     icon: Clock,
   },
   {
@@ -233,7 +233,7 @@ const navItems: NavItem[] = [
   },
   {
     title: 'Chat Support',
-    href: '/admin/support/chat',
+    href: '/components/ChatBot',
     icon: MessageSquare,
   },
 ];

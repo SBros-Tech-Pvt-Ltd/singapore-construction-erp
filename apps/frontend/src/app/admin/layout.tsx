@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react'
 import { AdminHeader } from '@/components/admin/header'
 import { AdminSidebar } from '@/components/admin/sidebar'
+import Chatbot from '@/components/ChatBot';
 
 export default function AdminLayout({
   children,
@@ -39,17 +40,15 @@ export default function AdminLayout({
       />
 
       {/* Main Layout */}
-      <div className={
-        `flex-1 flex flex-col overflow-hidden transition-all duration-300 ${
-          sidebarCollapsed ? 'lg:ml-' : 'lg:ml-'
-        }`
-      }>
+      <div className="flex-1 flex flex-col overflow-hidden transition-all duration-300">
         {/* Header */}
         <AdminHeader />
 
         {/* Content */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          <div className="max-w-7xl mx-auto w-full">{children}</div>
+          <div className="max-w-7xl mx-auto w-full">{children}
+          <Chatbot />
+          </div>
         </main>
       </div>
     </div>
