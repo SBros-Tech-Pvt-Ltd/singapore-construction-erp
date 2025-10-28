@@ -1,7 +1,7 @@
 // app/admin/attendance/device-mapping/page.tsx
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Link2,
   Plus,
@@ -16,6 +16,10 @@ import {
   Wifi,
   WifiOff,
   Fingerprint,
+  ChevronDown,
+  ChevronRight,
+  User,
+  Monitor,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,37 +60,88 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 // Types
 type DeviceStatus = 'online' | 'offline';
 
-interface DeviceMapping {
+interface DeviceInfo {
+  deviceId: string;
+  deviceName: string;
+  deviceUserId: string;
+  deviceStatus: DeviceStatus;
+  effectiveFrom: string;
+  isActive: boolean;
+}
+
+interface EmployeeMapping {
   id: number;
   employeeCode: string;
   employeeName: string;
   photo: string;
   branch: string;
   department: string;
-  deviceId: string;
-  deviceName: string;
-  deviceUserId: string;
-  deviceStatus: DeviceStatus;
-  isActive: boolean;
-  effectiveFrom: string;
+  devices: DeviceInfo[];
 }
 
-// Add/Edit Mapping Modal
+// Add/Edit Multiple Devices Modal
 interface MappingModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: () => void;
-  editData?: DeviceMapping | null;
+  employee?: EmployeeMapping | null;
 }
 
-function MappingModal({ open, onOpenChange, onSave, editData }: MappingModalProps) {
-  const [formData, setFormData] = useState({
-    employeeCode: editData?.employeeCode || '',
-    deviceId: editData?.deviceId || '',
-    deviceUserId: editData?.deviceUserId || '',
-    effectiveFrom: editData?.effectiveFrom || new Date().toISOString().split('T')[0],
-    isActive: editData?.isActive ?? true,
-  });
+function MappingModal({ open, onOpenChange, onSave, employee }: MappingModalProps) {
+  const [selectedEmployee, setSelectedEmployee] = useState(employee?.employeeCode || '');
+  const [devices, setDevices] = useState<DeviceInfo[]>(
+    employee?.devices || [
+      {
+        deviceId: '',
+        deviceName: '',
+        deviceUserId: '',
+        deviceStatus: 'online',
+        effectiveFrom: new Date().toISOString().split('T')[0],
+        isActive: true,
+      },
+    ]
+  );
+
+  const availableDevices = [
+    { id: 'BD001', name: 'Bio-Device-HQ-01', status: 'online' as DeviceStatus },
+    { id: 'BD002', name: 'Bio-Device-HQ-02', status: 'online' as DeviceStatus },
+    { id: 'BD003', name: 'Bio-Device-SA-01', status: 'online' as DeviceStatus },
+    { id: 'BD004', name: 'Bio-Device-SB-01', status: 'offline' as DeviceStatus },
+  ];
+
+  const addDevice = () => {
+    setDevices([
+      ...devices,
+      {
+        deviceId: '',
+        deviceName: '',
+        deviceUserId: '',
+        deviceStatus: 'online',
+        effectiveFrom: new Date().toISOString().split('T')[0],
+        isActive: true,
+      },
+    ]);
+  };
+
+  const removeDevice = (index: number) => {
+    setDevices(devices.filter((_, i) => i !== index));
+  };
+
+  const updateDevice = (index: number, field: keyof DeviceInfo, value: any) => {
+    const updated = [...devices];
+    updated[index] = { ...updated[index], [field]: value };
+    
+    // Auto-fill device name and status when device ID is selected
+    if (field === 'deviceId') {
+      const device = availableDevices.find(d => d.id === value);
+      if (device) {
+        updated[index].deviceName = device.name;
+        updated[index].deviceStatus = device.status;
+      }
+    }
+    
+    setDevices(updated);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,18 +151,22 @@ function MappingModal({ open, onOpenChange, onSave, editData }: MappingModalProp
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{editData ? 'Edit Device Mapping' : 'Add Device Mapping'}</DialogTitle>
+          <DialogTitle>
+            {employee ? `Manage Device Mapping - ${employee.employeeName}` : 'Add Device Mapping'}
+          </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Employee Selection */}
           <div>
             <label className="block text-sm font-medium mb-2">
               Employee <span className="text-destructive">*</span>
             </label>
-            <Select 
-              value={formData.employeeCode} 
-              onValueChange={(value) => setFormData({ ...formData, employeeCode: value })}
+            <Select
+              value={selectedEmployee}
+              onValueChange={setSelectedEmployee}
+              disabled={!!employee}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Search by name or code..." />
@@ -121,74 +180,131 @@ function MappingModal({ open, onOpenChange, onSave, editData }: MappingModalProp
             </Select>
           </div>
 
-          {formData.employeeCode && (
+          {selectedEmployee && (
             <div className="p-3 bg-muted rounded-lg">
               <p className="text-sm text-muted-foreground mb-1">Branch (auto-filled)</p>
               <p className="font-medium">Head Office</p>
             </div>
           )}
 
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Biometric Device <span className="text-destructive">*</span>
-            </label>
-            <Select 
-              value={formData.deviceId} 
-              onValueChange={(value) => setFormData({ ...formData, deviceId: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select device" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="BD001">Bio-Device-HQ-01 (Online)</SelectItem>
-                <SelectItem value="BD002">Bio-Device-HQ-02 (Online)</SelectItem>
-                <SelectItem value="BD003">Bio-Device-SA-01 (Online)</SelectItem>
-                <SelectItem value="BD004">Bio-Device-SB-01 (Offline)</SelectItem>
-              </SelectContent>
-            </Select>
+          {/* Devices Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Device Mappings</h3>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addDevice}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Another Device
+              </Button>
+            </div>
+
+            {devices.map((device, index) => (
+              <Card key={index} className="border-2">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-4">
+                    <h4 className="text-sm font-medium">Device {index + 1}</h4>
+                    {devices.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeDevice(index)}
+                        className="h-8 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Biometric Device <span className="text-destructive">*</span>
+                      </label>
+                      <Select
+                        value={device.deviceId}
+                        onValueChange={(value) => updateDevice(index, 'deviceId', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select device" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableDevices.map((d) => (
+                            <SelectItem key={d.id} value={d.id}>
+                              <div className="flex items-center gap-2">
+                                {d.status === 'online' ? (
+                                  <Wifi className="h-3 w-3 text-green-600" />
+                                ) : (
+                                  <WifiOff className="h-3 w-3 text-red-600" />
+                                )}
+                                {d.name}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Device User ID <span className="text-destructive">*</span>
+                      </label>
+                      <Input
+                        value={device.deviceUserId}
+                        onChange={(e) => updateDevice(index, 'deviceUserId', e.target.value)}
+                        placeholder="e.g., 1001"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Effective From</label>
+                      <Input
+                        type="date"
+                        value={device.effectiveFrom}
+                        onChange={(e) => updateDevice(index, 'effectiveFrom', e.target.value)}
+                      />
+                    </div>
+
+                    <div className="flex items-center pt-6">
+                      <Checkbox
+                        id={`active-${index}`}
+                        checked={device.isActive}
+                        onCheckedChange={(checked) =>
+                          updateDevice(index, 'isActive', checked as boolean)
+                        }
+                      />
+                      <label htmlFor={`active-${index}`} className="ml-2 text-sm font-medium">
+                        Enable this device mapping
+                      </label>
+                    </div>
+                  </div>
+
+                  {device.deviceId && (
+                    <div className="mt-3 p-2 bg-muted/50 rounded text-xs">
+                      <strong>Selected:</strong> {device.deviceName} • Status:{' '}
+                      {device.deviceStatus === 'online' ? (
+                        <span className="text-green-600">Online</span>
+                      ) : (
+                        <span className="text-red-600">Offline</span>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Device User ID <span className="text-destructive">*</span>
-            </label>
-            <Input
-              value={formData.deviceUserId}
-              onChange={(e) => setFormData({ ...formData, deviceUserId: e.target.value })}
-              placeholder="e.g., 1001"
-              required
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              The unique ID assigned to this employee in the biometric device
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">Effective From</label>
-            <Input
-              type="date"
-              value={formData.effectiveFrom}
-              onChange={(e) => setFormData({ ...formData, effectiveFrom: e.target.value })}
-            />
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="active"
-              checked={formData.isActive}
-              onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked as boolean })}
-            />
-            <label htmlFor="active" className="text-sm font-medium">
-              Enable mapping
-            </label>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4">
+          <div className="flex justify-end gap-3 pt-4 border-t">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button type="submit">
-              {editData ? 'Update Mapping' : 'Save Mapping'}
+              {employee ? 'Update Mappings' : 'Save Mappings'}
             </Button>
           </div>
         </form>
@@ -238,10 +354,11 @@ function BulkImportModal({ open, onOpenChange }: BulkImportModalProps) {
               Employee_Code, Device_ID, Device_User_ID, Effective_From
             </code>
             <div className="mt-2">
-              <p className="text-xs text-muted-foreground mb-1">Example:</p>
+              <p className="text-xs text-muted-foreground mb-1">Example (Multiple devices per employee):</p>
               <code className="text-xs block bg-background p-2 rounded font-mono">
                 EMP001, BD001, 1001, 2024-01-01<br />
-                EMP002, BD002, 1002, 2024-01-01
+                EMP001, BD002, 1001, 2024-01-01<br />
+                EMP002, BD003, 1002, 2024-01-01
               </code>
             </div>
             <Button variant="link" size="sm" className="mt-2 h-auto p-0">
@@ -264,8 +381,8 @@ function BulkImportModal({ open, onOpenChange }: BulkImportModalProps) {
   );
 }
 
-// Sample JSON Data
-const deviceMappings: DeviceMapping[] = [
+// Sample JSON Data with Multiple Devices per Employee
+const employeeMappings: EmployeeMapping[] = [
   {
     id: 1,
     employeeCode: 'EMP001',
@@ -273,12 +390,24 @@ const deviceMappings: DeviceMapping[] = [
     photo: '',
     branch: 'Head Office',
     department: 'IT',
-    deviceId: 'BD001',
-    deviceName: 'Bio-Device-HQ-01',
-    deviceUserId: '1001',
-    deviceStatus: 'online',
-    isActive: true,
-    effectiveFrom: '2024-01-01',
+    devices: [
+      {
+        deviceId: 'BD001',
+        deviceName: 'Bio-Device-HQ-01',
+        deviceUserId: '1001',
+        deviceStatus: 'online',
+        effectiveFrom: '2024-01-01',
+        isActive: true,
+      },
+      {
+        deviceId: 'BD002',
+        deviceName: 'Bio-Device-HQ-02',
+        deviceUserId: '1001',
+        deviceStatus: 'online',
+        effectiveFrom: '2024-01-01',
+        isActive: true,
+      },
+    ],
   },
   {
     id: 2,
@@ -287,12 +416,16 @@ const deviceMappings: DeviceMapping[] = [
     photo: '',
     branch: 'Site A',
     department: 'HR',
-    deviceId: 'BD003',
-    deviceName: 'Bio-Device-SA-01',
-    deviceUserId: '2001',
-    deviceStatus: 'online',
-    isActive: true,
-    effectiveFrom: '2024-01-01',
+    devices: [
+      {
+        deviceId: 'BD003',
+        deviceName: 'Bio-Device-SA-01',
+        deviceUserId: '2001',
+        deviceStatus: 'online',
+        effectiveFrom: '2024-01-01',
+        isActive: true,
+      },
+    ],
   },
   {
     id: 3,
@@ -301,12 +434,7 @@ const deviceMappings: DeviceMapping[] = [
     photo: '',
     branch: 'Site B',
     department: 'Sales',
-    deviceId: '',
-    deviceName: '--',
-    deviceUserId: '',
-    deviceStatus: 'offline',
-    isActive: false,
-    effectiveFrom: '',
+    devices: [],
   },
   {
     id: 4,
@@ -315,12 +443,32 @@ const deviceMappings: DeviceMapping[] = [
     photo: '',
     branch: 'Head Office',
     department: 'IT',
-    deviceId: 'BD002',
-    deviceName: 'Bio-Device-HQ-02',
-    deviceUserId: '1002',
-    deviceStatus: 'online',
-    isActive: true,
-    effectiveFrom: '2024-01-01',
+    devices: [
+      {
+        deviceId: 'BD001',
+        deviceName: 'Bio-Device-HQ-01',
+        deviceUserId: '1004',
+        deviceStatus: 'online',
+        effectiveFrom: '2024-01-01',
+        isActive: true,
+      },
+      {
+        deviceId: 'BD002',
+        deviceName: 'Bio-Device-HQ-02',
+        deviceUserId: '1004',
+        deviceStatus: 'online',
+        effectiveFrom: '2024-01-01',
+        isActive: true,
+      },
+      {
+        deviceId: 'BD003',
+        deviceName: 'Bio-Device-SA-01',
+        deviceUserId: '1004',
+        deviceStatus: 'online',
+        effectiveFrom: '2024-01-10',
+        isActive: true,
+      },
+    ],
   },
   {
     id: 5,
@@ -329,12 +477,16 @@ const deviceMappings: DeviceMapping[] = [
     photo: '',
     branch: 'Site A',
     department: 'Tech',
-    deviceId: 'BD003',
-    deviceName: 'Bio-Device-SA-01',
-    deviceUserId: '2002',
-    deviceStatus: 'online',
-    isActive: true,
-    effectiveFrom: '2024-01-05',
+    devices: [
+      {
+        deviceId: 'BD003',
+        deviceName: 'Bio-Device-SA-01',
+        deviceUserId: '2002',
+        deviceStatus: 'online',
+        effectiveFrom: '2024-01-05',
+        isActive: true,
+      },
+    ],
   },
   {
     id: 6,
@@ -343,12 +495,16 @@ const deviceMappings: DeviceMapping[] = [
     photo: '',
     branch: 'Head Office',
     department: 'Finance',
-    deviceId: 'BD001',
-    deviceName: 'Bio-Device-HQ-01',
-    deviceUserId: '1003',
-    deviceStatus: 'online',
-    isActive: true,
-    effectiveFrom: '2024-01-01',
+    devices: [
+      {
+        deviceId: 'BD001',
+        deviceName: 'Bio-Device-HQ-01',
+        deviceUserId: '1003',
+        deviceStatus: 'online',
+        effectiveFrom: '2024-01-01',
+        isActive: true,
+      },
+    ],
   },
   {
     id: 7,
@@ -357,12 +513,7 @@ const deviceMappings: DeviceMapping[] = [
     photo: '',
     branch: 'Site B',
     department: 'Operations',
-    deviceId: '',
-    deviceName: '--',
-    deviceUserId: '',
-    deviceStatus: 'offline',
-    isActive: false,
-    effectiveFrom: '',
+    devices: [],
   },
   {
     id: 8,
@@ -371,85 +522,105 @@ const deviceMappings: DeviceMapping[] = [
     photo: '',
     branch: 'Head Office',
     department: 'Marketing',
-    deviceId: 'BD002',
-    deviceName: 'Bio-Device-HQ-02',
-    deviceUserId: '1004',
-    deviceStatus: 'online',
-    isActive: true,
-    effectiveFrom: '2024-01-01',
+    devices: [
+      {
+        deviceId: 'BD002',
+        deviceName: 'Bio-Device-HQ-02',
+        deviceUserId: '1005',
+        deviceStatus: 'online',
+        effectiveFrom: '2024-01-01',
+        isActive: true,
+      },
+    ],
   },
 ];
 
 export default function DeviceMappingPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [branchFilter, setBranchFilter] = useState('all');
-  const [deviceFilter, setDeviceFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [isMappingModalOpen, setIsMappingModalOpen] = useState(false);
   const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
-  const [editData, setEditData] = useState<DeviceMapping | null>(null);
+  const [selectedEmployee, setSelectedEmployee] = useState<EmployeeMapping | null>(null);
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
   // Calculate stats
-  const totalEmployees = deviceMappings.length;
-  const mappedCount = deviceMappings.filter(m => m.isActive && m.deviceId).length;
+  const totalEmployees = employeeMappings.length;
+  const mappedCount = employeeMappings.filter((e) => e.devices.length > 0).length;
   const unmappedCount = totalEmployees - mappedCount;
-  const devicesCount = new Set(deviceMappings.filter(m => m.deviceId).map(m => m.deviceId)).size;
+  const totalDeviceMappings = employeeMappings.reduce((sum, e) => sum + e.devices.length, 0);
 
   // Filter data
-  const filteredData = deviceMappings.filter((mapping) => {
-    const matchesSearch = 
-      mapping.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      mapping.employeeCode.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesBranch = branchFilter === 'all' || mapping.branch === branchFilter;
-    const matchesDevice = deviceFilter === 'all' || mapping.deviceName.includes(deviceFilter);
-    const matchesStatus = statusFilter === 'all' || 
-      (statusFilter === 'mapped' && mapping.isActive && mapping.deviceId) ||
-      (statusFilter === 'unmapped' && (!mapping.isActive || !mapping.deviceId));
-    
-    return matchesSearch && matchesBranch && matchesDevice && matchesStatus;
+  const filteredData = employeeMappings.filter((employee) => {
+    const matchesSearch =
+      employee.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      employee.employeeCode.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesBranch = branchFilter === 'all' || employee.branch === branchFilter;
+    const matchesStatus =
+      statusFilter === 'all' ||
+      (statusFilter === 'mapped' && employee.devices.length > 0) ||
+      (statusFilter === 'unmapped' && employee.devices.length === 0);
+
+    return matchesSearch && matchesBranch && matchesStatus;
   });
 
-  const handleEdit = (mapping: DeviceMapping) => {
-    setEditData(mapping);
+  const toggleRow = (id: number) => {
+    const newExpanded = new Set(expandedRows);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
+    } else {
+      newExpanded.add(id);
+    }
+    setExpandedRows(newExpanded);
+  };
+
+  const handleEdit = (employee: EmployeeMapping) => {
+    setSelectedEmployee(employee);
     setIsMappingModalOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    if (confirm('Are you sure you want to delete this mapping?')) {
-      alert(`✅ Deleting mapping ${id}...`);
+  const handleDelete = (employeeId: number, deviceId?: string) => {
+    if (deviceId) {
+      if (confirm(`Are you sure you want to remove device ${deviceId} mapping?`)) {
+        alert(`✅ Removing device ${deviceId} mapping...`);
+      }
+    } else {
+      if (confirm('Are you sure you want to delete all device mappings for this employee?')) {
+        alert(`✅ Deleting all mappings for employee ${employeeId}...`);
+      }
     }
   };
 
   const handleAddNew = () => {
-    setEditData(null);
+    setSelectedEmployee(null);
     setIsMappingModalOpen(true);
   };
 
   return (
     <div className="min-h-screen bg-background p-6">
-      {/* Stats Cards - Solid Colors (Option 2) */}
+      {/* Stats Cards - Gradient Colors */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {/* Total - Blue */}
-        <Card className="bg-blue-500 border-0">
+        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 border-0">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-600">
-                <Link2 className="h-5 w-5 text-white" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm">
+                <User className="h-5 w-5 text-white" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-white">{totalEmployees}</p>
-                <p className="text-xs text-blue-100">Total</p>
+                <p className="text-xs text-blue-100">Total Employees</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Mapped - Green */}
-        <Card className="bg-green-500 border-0">
+        <Card className="bg-gradient-to-br from-green-500 to-green-600 border-0">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-600">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm">
                 <CheckCircle2 className="h-5 w-5 text-white" />
               </div>
               <div>
@@ -461,10 +632,10 @@ export default function DeviceMappingPage() {
         </Card>
 
         {/* Unmapped - Red */}
-        <Card className="bg-red-500 border-0">
+        <Card className="bg-gradient-to-br from-red-500 to-red-600 border-0">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-600">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm">
                 <XCircle className="h-5 w-5 text-white" />
               </div>
               <div>
@@ -475,16 +646,16 @@ export default function DeviceMappingPage() {
           </CardContent>
         </Card>
 
-        {/* Devices - Purple */}
-        <Card className="bg-purple-500 border-0">
+        {/* Total Mappings - Purple */}
+        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 border-0">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-600">
-                <Fingerprint className="h-5 w-5 text-white" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm">
+                <Monitor className="h-5 w-5 text-white" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">{devicesCount}</p>
-                <p className="text-xs text-purple-100">Devices</p>
+                <p className="text-2xl font-bold text-white">{totalDeviceMappings}</p>
+                <p className="text-xs text-purple-100">Total Mappings</p>
               </div>
             </div>
           </CardContent>
@@ -496,7 +667,7 @@ export default function DeviceMappingPage() {
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <CardTitle className="text-lg md:text-xl">
-              Device Mapping ({filteredData.length})
+              Employee Device Mapping ({filteredData.length})
             </CardTitle>
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={() => setIsBulkImportOpen(true)}>
@@ -515,8 +686,8 @@ export default function DeviceMappingPage() {
             <div className="flex-1 max-w-md">
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Search by name or employee code..." 
+                <Input
+                  placeholder="Search by name or employee code..."
                   className="pl-8"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -533,18 +704,6 @@ export default function DeviceMappingPage() {
                   <SelectItem value="Head Office">Head Office</SelectItem>
                   <SelectItem value="Site A">Site A</SelectItem>
                   <SelectItem value="Site B">Site B</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={deviceFilter} onValueChange={setDeviceFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Device" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Devices</SelectItem>
-                  <SelectItem value="HQ-01">Bio-Device-HQ-01</SelectItem>
-                  <SelectItem value="HQ-02">Bio-Device-HQ-02</SelectItem>
-                  <SelectItem value="SA-01">Bio-Device-SA-01</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -567,11 +726,11 @@ export default function DeviceMappingPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[50px]"></TableHead>
                   <TableHead className="min-w-[200px]">Employee</TableHead>
                   <TableHead className="hidden md:table-cell">Branch</TableHead>
-                  <TableHead>Device ID</TableHead>
-                  <TableHead>Device Name</TableHead>
-                  <TableHead className="hidden lg:table-cell">Device User ID</TableHead>
+                  <TableHead className="hidden lg:table-cell">Department</TableHead>
+                  <TableHead>Devices Mapped</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="w-[70px]"></TableHead>
                 </TableRow>
@@ -582,90 +741,177 @@ export default function DeviceMappingPage() {
                     <TableCell colSpan={7} className="h-24 text-center">
                       <div className="flex flex-col items-center justify-center py-8">
                         <Link2 className="h-12 w-12 text-muted-foreground mb-4" />
-                        <p className="text-muted-foreground">No mappings found</p>
+                        <p className="text-muted-foreground">No employees found</p>
                       </div>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredData.map((mapping) => (
-                    <TableRow key={mapping.id} className="hover:bg-accent/50">
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar>
-                            <AvatarImage src={mapping.photo} />
-                            <AvatarFallback>
-                              {mapping.employeeName.split(' ').map(n => n[0]).join('')}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium">{mapping.employeeName}</div>
-                            <div className="text-sm text-muted-foreground">{mapping.employeeCode}</div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <span className="text-sm">{mapping.branch}</span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="font-mono">
-                          {mapping.deviceId || '--'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {mapping.deviceStatus === 'online' ? (
-                            <Wifi className="h-4 w-4 text-green-600" />
-                          ) : (
-                            <WifiOff className="h-4 w-4 text-red-600" />
-                          )}
-                          <span className="text-sm">{mapping.deviceName}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell">
-                        <span className="text-sm font-mono">{mapping.deviceUserId || '--'}</span>
-                      </TableCell>
-                      <TableCell>
-                        {mapping.isActive && mapping.deviceId ? (
-                          <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 border-green-200">
-                            <CheckCircle2 className="h-3 w-3 mr-1" />
-                            Mapped
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 border-red-200">
-                            <XCircle className="h-3 w-3 mr-1" />
-                            Unmapped
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <MoreHorizontal className="h-4 w-4" />
+                  filteredData.map((employee) => (
+                    <React.Fragment key={employee.id}>
+                      {/* Main Employee Row */}
+                      <TableRow className="hover:bg-accent/50">
+                        <TableCell>
+                          {employee.devices.length > 0 && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={() => toggleRow(employee.id)}
+                            >
+                              {expandedRows.has(employee.id) ? (
+                                <ChevronDown className="h-4 w-4" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4" />
+                              )}
                             </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => handleEdit(mapping)}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              {mapping.deviceId ? 'Edit Mapping' : 'Add Mapping'}
-                            </DropdownMenuItem>
-                            {mapping.deviceId && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                  className="text-destructive"
-                                  onClick={() => handleDelete(mapping.id)}
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete Mapping
-                                </DropdownMenuItem>
-                              </>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar>
+                              <AvatarImage src={employee.photo} />
+                              <AvatarFallback>
+                                {employee.employeeName.split(' ').map((n) => n[0]).join('')}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium">{employee.employeeName}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {employee.employeeCode}
+                              </div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <span className="text-sm">{employee.branch}</span>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell">
+                          <span className="text-sm">{employee.department}</span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="font-semibold">
+                              {employee.devices.length}
+                            </Badge>
+                            {employee.devices.length > 0 && (
+                              <span className="text-xs text-muted-foreground">
+                                {employee.devices.length === 1 ? 'device' : 'devices'}
+                              </span>
                             )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {employee.devices.length > 0 ? (
+                            <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 border-green-200">
+                              <CheckCircle2 className="h-3 w-3 mr-1" />
+                              Mapped
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 border-red-200">
+                              <XCircle className="h-3 w-3 mr-1" />
+                              Unmapped
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={() => handleEdit(employee)}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Manage Devices
+                              </DropdownMenuItem>
+                              {employee.devices.length > 0 && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className="text-destructive"
+                                    onClick={() => handleDelete(employee.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Remove All Mappings
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+
+                      {/* Expanded Device Details */}
+                      {expandedRows.has(employee.id) && employee.devices.length > 0 && (
+                        <TableRow>
+                          <TableCell colSpan={7} className="bg-muted/50 p-0">
+                            <div className="p-4">
+                              <div className="space-y-2">
+                                {employee.devices.map((device, idx) => (
+                                  <div
+                                    key={`${employee.id}-${device.deviceId}-${idx}`}
+                                    className="flex items-center justify-between p-3 bg-background rounded-lg border"
+                                  >
+                                    <div className="flex items-center gap-4 flex-1">
+                                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-400 text-xs font-semibold">
+                                        {idx + 1}
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        {device.deviceStatus === 'online' ? (
+                                          <Wifi className="h-4 w-4 text-green-600" />
+                                        ) : (
+                                          <WifiOff className="h-4 w-4 text-red-600" />
+                                        )}
+                                        <div>
+                                          <div className="font-medium text-sm">
+                                            {device.deviceName}
+                                          </div>
+                                          <div className="text-xs text-muted-foreground">
+                                            ID: {device.deviceId} • User ID: {device.deviceUserId}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                      <div className="text-right hidden sm:block">
+                                        <div className="text-xs text-muted-foreground">
+                                          Since {device.effectiveFrom}
+                                        </div>
+                                        {device.isActive ? (
+                                          <Badge
+                                            variant="outline"
+                                            className="text-xs mt-1 bg-green-50 text-green-700 border-green-200"
+                                          >
+                                            Active
+                                          </Badge>
+                                        ) : (
+                                          <Badge
+                                            variant="outline"
+                                            className="text-xs mt-1 bg-gray-50 text-gray-700 border-gray-200"
+                                          >
+                                            Inactive
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-destructive hover:text-destructive"
+                                        onClick={() => handleDelete(employee.id, device.deviceId)}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
                   ))
                 )}
               </TableBody>
@@ -675,17 +921,14 @@ export default function DeviceMappingPage() {
       </Card>
 
       {/* Modals */}
-      <MappingModal 
+      <MappingModal
         open={isMappingModalOpen}
         onOpenChange={setIsMappingModalOpen}
-        onSave={() => alert('✅ Mapping saved successfully!')}
-        editData={editData}
+        onSave={() => alert('✅ Device mappings saved successfully!')}
+        employee={selectedEmployee}
       />
 
-      <BulkImportModal 
-        open={isBulkImportOpen}
-        onOpenChange={setIsBulkImportOpen}
-      />
+      <BulkImportModal open={isBulkImportOpen} onOpenChange={setIsBulkImportOpen} />
     </div>
   );
 }
