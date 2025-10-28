@@ -121,12 +121,12 @@ const navItems: NavItem[] = [
   {
     category: 'Master Data',
     title: 'Departments',
-    href: '/admin/masters/departments',
+    href: '/admin/Departmentmaster',
     icon: Briefcase,
   },
   {
     title: 'Designations',
-    href: '/admin/masters/designations',
+    href: '/admin/Designationmaster',
     icon: Users,
   },
   {
@@ -136,17 +136,17 @@ const navItems: NavItem[] = [
   },
   {
     title: 'Attendance Rules',
-    href: '/admin/masters/attendance-rules',
+    href: '/admin/attendencemaster',
     icon: CalendarDays,
   },
   {
     title: 'Leave Types',
-    href: '/admin/masters/leave-types',
+    href: '/admin/leavemaster',
     icon: FileCheck,
   },
   {
     title: 'Company Policies',
-    href: '/admin/masters/policies',
+    href: '/admin/companypolicymaster',
     icon: FileText,
   },
   {
@@ -170,23 +170,24 @@ const navItems: NavItem[] = [
   {
     category: 'Reports & Analytics',
     title: 'Login Reports',
-    href: '/admin/reports/logins',
+    href: '/admin/loginusagereport',
     icon: Users,
   },
   {
-    title: 'Device Sync',
-    href: '/admin/reports/device-sync',
-    icon: Fingerprint,
-  },
-  {
     title: 'Role Audit',
-    href: '/admin/reports/role-audit',
+    href: '/admin/roleauditreport',
     icon: Shield,
   },
   {
     title: 'Branch Summary',
-    href: '/admin/reports/branch-summary',
+    href: '/admin/branchsummaryreport',
     icon: Building2,
+  },
+  {
+    category: 'Employee Document',
+    title: 'Employee Document',
+    href: '/admin/employeedocument',
+    icon: Users,
   },
   {
     category: 'Settings',
